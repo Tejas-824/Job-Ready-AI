@@ -1,0 +1,27 @@
+.button {
+    border: none;
+    outline: none;
+    padding-inline: 1.4rem;
+    padding-block: 0.85rem;
+    border-radius: 0.9rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.25s ease-in-out;
+
+    &.primary-button {
+background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        color: #ffffff;
+        box-shadow: 0 8px 20px rgba(225, 3, 77, 0.28);
+    }
+
+    &.primary-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(225, 3, 77, 0.35);
+    }
+
+    &:active {
+        transform: scale(0.96);
+    }
+}
