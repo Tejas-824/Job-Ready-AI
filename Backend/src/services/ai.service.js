@@ -7,42 +7,54 @@ const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY
 })
 
-
 const interviewReportSchema = z.object({
-    matchScore: z.number().describe("A score between 0 and 100 indicating how well the candidate's profile matches the job describe"),
-    technicalQuestions: z.array(z.object({
-        question: z.string().describe("The technical question can be asked in the interview"),
-        intention: z.string().describe("The intention of interviewer behind asking this question"),
-        answer: z.string().describe("How to answer this question, what points to cover, what approach to take etc.")
-    })).describe("Technical questions that can be asked in the interview along with their intention and how to answer them"),
-    behavioralQuestions: z.array(z.object({
-        question: z.string().describe("The technical question can be asked in the interview"),
-        intention: z.string().describe("The intention of interviewer behind asking this question"),
-        answer: z.string().describe("How to answer this question, what points to cover, what approach to take etc.")
-    })).describe("Behavioral questions that can be asked in the interview along with their intention and how to answer them"),
-    skillGaps: z.array(z.object({
-        skill: z.string().describe("The skill which the candidate is lacking"),
-        severity: z.enum([ "low", "medium", "high" ]).describe("The severity of this skill gap, i.e. how important is this skill for the job and how much it can impact the candidate's chances")
-    })).describe("List of skill gaps in the candidate's profile along with their severity"),
-    preparationPlan: z.array(z.object({
-        day: z.number().describe("The day number in the preparation plan, starting from 1"),
-        focus: z.string().describe("The main focus of this day in the preparation plan, e.g. data structures, system design, mock interviews etc."),
-        tasks: z.array(z.string()).describe("List of tasks to be done on this day to follow the preparation plan, e.g. read a specific book or article, solve a set of problems, watch a video etc.")
-    })).describe("A day-wise preparation plan for the candidate to follow in order to prepare for the interview effectively"),
-    title: z.string().describe("The title of the job for which the interview report is generated"),
+    matchScore: z.number(),
+    technicalQuestions: z.array(
+        z.object({
+            question: z.string(),
+            intention: z.string(),
+            answer: z.string()
+        })
+    ),
+    behavioralQuestions: z.array(
+        z.object({
+            question: z.string(),
+            intention: z.string(),
+            answer: z.string()
+        })
+    ),
+    skillGaps: z.array(
+        z.object({
+            skill: z.string(),
+            severity: z.enum(["low", "medium", "high"])
+        })
+    ),
+    preparationPlan: z.array(
+        z.object({
+            day: z.number(),
+            focus: z.string(),
+            tasks: z.array(z.string())
+        })
+    ),
+    title: z.string()
 })
 
 async function generateInterviewReport({ resume, selfDescription, jobDescription }) {
+    const prompt = `
+Generate an interview report for a candidate.
 
+Resume:
+${resume || "Not provided"}
 
-    const prompt = `Generate an interview report for a candidate with the following details:
-                        Resume: ${resume}
-                        Self Description: ${selfDescription}
-                        Job Description: ${jobDescription}
+Self Description:
+${selfDescription || "Not provided"}
+
+Job Description:
+${jobDescription || "Not provided"}
 `
 
     const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -50,67 +62,185 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
         }
     })
 
-    return JSON.parse(response.text)
+    console.log("INTERVIEW AI FULL RESPONSE:", response)
 
+    const responseText =
+        typeof response?.text === "function" ? response.text() : response?.text
 
+    console.log("INTERVIEW AI RESPONSE TEXT:", responseText)
+
+    if (!response || !responseText) {
+        throw new Error("AI did not return interview report.")
+    }
+
+    try {
+        return JSON.parse(responseText)
+    } catch (error) {
+        console.log("INTERVIEW AI JSON PARSE ERROR:", error)
+        console.log("INTERVIEW RAW AI RESPONSE TEXT:", responseText)
+        throw new Error("Invalid JSON returned by AI.")
+    }
 }
 
-
-
-async function generatePdfFromHtml(htmlContent) {
-    const browser = await puppeteer.launch()
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: "networkidle0" })
-
-    const pdfBuffer = await page.pdf({
-        format: "A4", margin: {
-            top: "20mm",
-            bottom: "20mm",
-            left: "15mm",
-            right: "15mm"
-        }
-    })
-
-    await browser.close()
-
-    return pdfBuffer
+function wrapHtml(bodyContent) {
+    return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Resume</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                padding: 30px;
+                color: #222;
+                line-height: 1.5;
+            }
+            h1, h2, h3 {
+                margin-bottom: 8px;
+            }
+            p {
+                margin: 6px 0;
+            }
+            ul {
+                margin: 6px 0 12px 20px;
+            }
+            li {
+                margin-bottom: 4px;
+            }
+            hr {
+                margin: 16px 0;
+                border: none;
+                border-top: 1px solid #ccc;
+            }
+        </style>
+    </head>
+    <body>
+        ${bodyContent}
+    </body>
+    </html>
+    `
 }
 
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
-
-    const resumePdfSchema = z.object({
-        html: z.string().describe("The HTML content of the resume which can be converted to PDF using any library like puppeteer")
+    const resumeSchema = z.object({
+        html: z.string()
     })
 
-    const prompt = `Generate resume for a candidate with the following details:
-                        Resume: ${resume}
-                        Self Description: ${selfDescription}
-                        Job Description: ${jobDescription}
+    const prompt = `
+Generate a professional ATS-friendly resume in HTML format.
 
-                        the response should be a JSON object with a single field "html" which contains the HTML content of the resume which can be converted to PDF using any library like puppeteer.
-                        The resume should be tailored for the given job description and should highlight the candidate's strengths and relevant experience. The HTML content should be well-formatted and structured, making it easy to read and visually appealing.
-                        The content of resume should be not sound like it's generated by AI and should be as close as possible to a real human-written resume.
-                        you can highlight the content using some colors or different font styles but the overall design should be simple and professional.
-                        The content should be ATS friendly, i.e. it should be easily parsable by ATS systems without losing important information.
-                        The resume should not be so lengthy, it should ideally be 1-2 pages long when converted to PDF. Focus on quality rather than quantity and make sure to include all the relevant information that can increase the candidate's chances of getting an interview call for the given job description.
-                    `
+Candidate Resume:
+${resume || "Not provided"}
+
+Self Description:
+${selfDescription || "Not provided"}
+
+Target Job Description:
+${jobDescription || "Not provided"}
+
+Instructions:
+- Return only JSON
+- JSON should contain only one key: "html"
+- "html" should contain only resume body content, not full HTML document
+- Make the resume clean, professional and ATS-friendly
+- Use sections like Summary, Skills, Education, Projects, Experience if relevant
+`
+
+    console.log("RESUME PDF STARTED")
+    console.log("RESUME LENGTH:", resume ? resume.length : 0)
+    console.log("SELF DESCRIPTION LENGTH:", selfDescription ? selfDescription.length : 0)
+    console.log("JOB DESCRIPTION LENGTH:", jobDescription ? jobDescription.length : 0)
 
     const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
-            responseSchema: zodToJsonSchema(resumePdfSchema),
+            responseSchema: zodToJsonSchema(resumeSchema),
         }
     })
 
+    console.log("RESUME AI FULL RESPONSE:", response)
 
-    const jsonContent = JSON.parse(response.text)
+    const responseText =
+        typeof response?.text === "function" ? response.text() : response?.text
 
-    const pdfBuffer = await generatePdfFromHtml(jsonContent.html)
+    console.log("RESUME AI RESPONSE TEXT:", responseText)
 
-    return pdfBuffer
+    if (!response || !responseText) {
+        throw new Error("AI did not return resume content.")
+    }
 
+    let parsedData
+
+    try {
+        parsedData = JSON.parse(responseText)
+    } catch (error) {
+        console.log("RESUME AI JSON PARSE ERROR:", error)
+        console.log("RESUME RAW AI RESPONSE TEXT:", responseText)
+        throw new Error("Invalid JSON returned by AI.")
+    }
+
+    if (!parsedData?.html) {
+        console.log("RESUME PARSED DATA:", parsedData)
+        throw new Error("Resume HTML not generated.")
+    }
+
+    const fullHtml = wrapHtml(parsedData.html)
+
+    console.log("FULL HTML GENERATED")
+    console.log("FULL HTML LENGTH:", fullHtml.length)
+
+    let browser
+
+    try {
+        console.log("PUPPETEER LAUNCH START")
+        browser = await puppeteer.launch({
+            headless: true,
+            args: [
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--no-zygote"
+            ]
+        })
+        console.log("PUPPETEER LAUNCHED")
+
+        const page = await browser.newPage()
+        console.log("NEW PAGE CREATED")
+
+        await page.setContent(fullHtml, { waitUntil: "load" })
+        console.log("HTML SET ON PAGE")
+
+        const pdfBuffer = await page.pdf({
+            format: "A4",
+            printBackground: true,
+            margin: {
+                top: "20mm",
+                right: "15mm",
+                bottom: "20mm",
+                left: "15mm"
+            }
+        })
+
+        console.log("PDF BUFFER GENERATED:", pdfBuffer ? pdfBuffer.length : 0)
+
+        return Buffer.from(pdfBuffer)
+    } catch (error) {
+        console.log("PUPPETEER PDF ERROR:", error)
+        throw new Error(`Failed to generate PDF: ${error.message}`)
+    } finally {
+        if (browser) {
+            await browser.close()
+            console.log("PUPPETEER CLOSED")
+        }
+    }
 }
 
-module.exports = { generateInterviewReport, generateResumePdf }
+module.exports = {
+    generateInterviewReport,
+    generateResumePdf
+}

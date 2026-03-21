@@ -1,11 +1,14 @@
-import { getAllInterviewReports, generateInterviewReport, getInterviewReportById, generateResumePdf } from "../services/interview.api"
+import {
+    getAllInterviewReports,
+    generateInterviewReport,
+    getInterviewReportById,
+    generateResumePdf
+} from "../services/interview.api"
 import { useContext, useEffect } from "react"
 import { InterviewContext } from "../interview.context"
 import { useParams } from "react-router"
 
-
 export const useInterview = () => {
-
     const context = useContext(InterviewContext)
     const { interviewId } = useParams()
 
@@ -18,11 +21,12 @@ export const useInterview = () => {
     const generateReport = async ({ jobDescription, selfDescription, resumeFile }) => {
         setLoading(true)
         let response = null
+
         try {
             response = await generateInterviewReport({ jobDescription, selfDescription, resumeFile })
             setReport(response?.interviewReport || null)
         } catch (error) {
-            console.log(error)
+            console.log("Generate Report Error:", error.response?.data || error.message)
         } finally {
             setLoading(false)
         }
@@ -33,25 +37,28 @@ export const useInterview = () => {
     const getReportById = async (interviewId) => {
         setLoading(true)
         let response = null
+
         try {
             response = await getInterviewReportById(interviewId)
             setReport(response?.interviewReport || null)
         } catch (error) {
-            console.log(error)
+            console.log("Get Report By Id Error:", error.response?.data || error.message)
         } finally {
             setLoading(false)
         }
+
         return response?.interviewReport || null
     }
 
     const getReports = async () => {
         setLoading(true)
         let response = null
+
         try {
             response = await getAllInterviewReports()
             setReports(response?.interviewReports || [])
         } catch (error) {
-            console.log(error)
+            console.log("Get Reports Error:", error.response?.data || error.message)
         } finally {
             setLoading(false)
         }
@@ -61,18 +68,26 @@ export const useInterview = () => {
 
     const getResumePdf = async (interviewReportId) => {
         setLoading(true)
-        let response = null
+
         try {
-            response = await generateResumePdf({ interviewReportId })
-            const url = window.URL.createObjectURL(new Blob([ response ], { type: "application/pdf" }))
+            const response = await generateResumePdf({ interviewReportId })
+
+            if (response.type === "text/html") {
+                const errorText = await response.text()
+                console.log("Backend returned HTML error:", errorText)
+                throw new Error("PDF was not generated")
+            }
+
+            const url = window.URL.createObjectURL(response)
             const link = document.createElement("a")
             link.href = url
             link.setAttribute("download", `resume_${interviewReportId}.pdf`)
             document.body.appendChild(link)
             link.click()
-        }
-        catch (error) {
-            console.log(error)
+            link.remove()
+            window.URL.revokeObjectURL(url)
+        } catch (error) {
+            console.log("Resume PDF Error:", error.message)
         } finally {
             setLoading(false)
         }
@@ -84,8 +99,7 @@ export const useInterview = () => {
         } else {
             getReports()
         }
-    }, [ interviewId ])
+    }, [interviewId])
 
     return { loading, report, reports, generateReport, getReportById, getReports, getResumePdf }
-
 }

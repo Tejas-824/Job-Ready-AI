@@ -7,27 +7,76 @@ const Home = () => {
     const { loading, generateReport, reports } = useInterview()
     const [jobDescription, setJobDescription] = useState("")
     const [selfDescription, setSelfDescription] = useState("")
-    const resumeInputRef = useRef()
+    const [resumeFile, setResumeFile] = useState(null)
+    const fileInputRef = useRef(null)
 
     const navigate = useNavigate()
 
+    const handleFileChange = (e) => {
+        const file = e.target.files?.[0]
+
+        if (!file) return
+
+        if (file.type !== "application/pdf") {
+            alert("Only PDF files are allowed")
+            e.target.value = ""
+            return
+        }
+
+        setResumeFile(file)
+    }
+
+    const handleDrop = (e) => {
+        e.preventDefault()
+
+        const file = e.dataTransfer.files?.[0]
+
+        if (!file) return
+
+        if (file.type !== "application/pdf") {
+            alert("Only PDF files are allowed")
+            return
+        }
+
+        setResumeFile(file)
+    }
+
+    const handleDragOver = (e) => {
+        e.preventDefault()
+    }
+
     const handleGenerateReport = async () => {
-        const resumeFile = resumeInputRef.current.files[0]
-        const data = await generateReport({ jobDescription, selfDescription, resumeFile })
-        if (data?._id) navigate(`/interview/${data._id}`)
+        if (!jobDescription.trim()) {
+            alert("Job description is required")
+            return
+        }
+
+        if (!resumeFile && !selfDescription.trim()) {
+            alert("Please upload your resume or write a self-description")
+            return
+        }
+
+        const data = await generateReport({
+            jobDescription,
+            selfDescription,
+            resumeFile
+        })
+
+        if (data?._id) {
+            navigate(`/interview/${data._id}`)
+        }
     }
 
     if (loading) {
         return (
             <main className='loading-screen'>
-                <h1>Loading your interview plan...</h1>
+                <h1>Loading Please wait...</h1>
             </main>
         )
     }
 
     return (
         <div className='home-page'>
-            {/* Page Header */}
             <header className='page-header'>
                 <span className='page-header__tag'>AI Powered Interview Prep</span>
                 <h1>Create Your Custom <span className='highlight'>Interview Plan</span></h1>
@@ -36,11 +85,8 @@ const Home = () => {
                 </p>
             </header>
 
-            {/* Main Card */}
             <div className='interview-card'>
                 <div className='interview-card__body'>
-
-                    {/* Left Panel - Job Description */}
                     <div className='panel panel--left'>
                         <div className='panel__header'>
                             <div className='panel__header-left'>
@@ -60,7 +106,7 @@ const Home = () => {
 
                         <textarea
                             value={jobDescription}
-                            onChange={(e) => { setJobDescription(e.target.value) }}
+                            onChange={(e) => setJobDescription(e.target.value)}
                             className='panel__textarea'
                             placeholder={`Paste the full job description here...\ne.g. 'Senior Frontend Engineer at Google requires proficiency in React, TypeScript, and large-scale system design...'`}
                             maxLength={5000}
@@ -72,10 +118,8 @@ const Home = () => {
                         </div>
                     </div>
 
-                    {/* Vertical Divider */}
                     <div className='panel-divider' />
 
-                    {/* Right Panel - Profile */}
                     <div className='panel panel--right'>
                         <div className='panel__header'>
                             <div className='panel__header-left'>
@@ -92,14 +136,18 @@ const Home = () => {
                             </div>
                         </div>
 
-                        {/* Upload Resume */}
                         <div className='upload-section'>
                             <label className='section-label'>
                                 Upload Resume
                                 <span className='badge badge--best'>Best Results</span>
                             </label>
 
-                            <label className='dropzone' htmlFor='resume'>
+                            <div
+                                className='dropzone'
+                                onClick={() => fileInputRef.current?.click()}
+                                onDrop={handleDrop}
+                                onDragOver={handleDragOver}
+                            >
                                 <span className='dropzone__icon'>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <polyline points="16 16 12 12 8 16" />
@@ -109,30 +157,29 @@ const Home = () => {
                                 </span>
 
                                 <p className='dropzone__title'>
-                                    {resumeInputRef.current?.files?.[0]?.name || 'Click to upload or drag & drop'}
+                                    {resumeFile?.name || 'Click to upload or drag & drop'}
                                 </p>
-                                <p className='dropzone__subtitle'>PDF or DOCX (Max 5MB)</p>
+                                <p className='dropzone__subtitle'>PDF only (Max 3MB)</p>
 
                                 <input
-                                    ref={resumeInputRef}
+                                    ref={fileInputRef}
                                     hidden
                                     type='file'
                                     id='resume'
                                     name='resume'
-                                    accept='.pdf,.docx'
+                                    accept='.pdf,application/pdf'
+                                    onChange={handleFileChange}
                                 />
-                            </label>
+                            </div>
                         </div>
 
-                        {/* OR Divider */}
                         <div className='or-divider'><span>OR</span></div>
 
-                        {/* Quick Self-Description */}
                         <div className='self-description'>
                             <label className='section-label' htmlFor='selfDescription'>Quick Self-Description</label>
                             <textarea
                                 value={selfDescription}
-                                onChange={(e) => { setSelfDescription(e.target.value) }}
+                                onChange={(e) => setSelfDescription(e.target.value)}
                                 id='selfDescription'
                                 name='selfDescription'
                                 className='panel__textarea panel__textarea--short'
@@ -140,7 +187,6 @@ const Home = () => {
                             />
                         </div>
 
-                        {/* Info Box */}
                         <div className='info-box'>
                             <span className='info-box__icon'>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -156,9 +202,8 @@ const Home = () => {
                     </div>
                 </div>
 
-                {/* Card Footer */}
                 <div className='interview-card__footer'>
-                    <span className='footer-info'>AI-Powered Strategy Generation &bull; Approx 30s</span>
+                    <span className='footer-info'>AI-Powered Strategy Generation</span>
                     <button onClick={handleGenerateReport} className='generate-btn'>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
@@ -168,7 +213,6 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* Recent Reports List */}
             {reports.length > 0 && (
                 <section className='recent-reports'>
                     <div className='recent-reports__head'>
@@ -199,7 +243,6 @@ const Home = () => {
                 </section>
             )}
 
-            {/* Page Footer */}
             <footer className='page-footer'>
                 <a href='#'>Privacy Policy</a>
                 <a href='#'>Terms of Service</a>
