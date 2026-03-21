@@ -4,6 +4,11 @@ import { login, register, logout, getMe } from "../services/auth.api";
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
+
+    if (!context) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+
     const { user, setUser, loading, setLoading } = context;
 
     const handleLogin = async ({ email, password }) => {
@@ -39,8 +44,13 @@ export const useAuth = () => {
         try {
             await logout();
             setUser(null);
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
             return true;
         } catch (err) {
+            setUser(null);
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
             return false;
         } finally {
             setLoading(false);
