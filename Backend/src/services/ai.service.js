@@ -62,12 +62,8 @@ ${jobDescription || "Not provided"}
         }
     })
 
-    console.log("INTERVIEW AI FULL RESPONSE:", response)
-
     const responseText =
         typeof response?.text === "function" ? response.text() : response?.text
-
-    console.log("INTERVIEW AI RESPONSE TEXT:", responseText)
 
     if (!response || !responseText) {
         throw new Error("AI did not return interview report.")
@@ -76,8 +72,6 @@ ${jobDescription || "Not provided"}
     try {
         return JSON.parse(responseText)
     } catch (error) {
-        console.log("INTERVIEW AI JSON PARSE ERROR:", error)
-        console.log("INTERVIEW RAW AI RESPONSE TEXT:", responseText)
         throw new Error("Invalid JSON returned by AI.")
     }
 }
@@ -148,11 +142,6 @@ Instructions:
 - Use sections like Summary, Skills, Education, Projects, Experience if relevant
 `
 
-    console.log("RESUME PDF STARTED")
-    console.log("RESUME LENGTH:", resume ? resume.length : 0)
-    console.log("SELF DESCRIPTION LENGTH:", selfDescription ? selfDescription.length : 0)
-    console.log("JOB DESCRIPTION LENGTH:", jobDescription ? jobDescription.length : 0)
-
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: prompt,
@@ -162,12 +151,8 @@ Instructions:
         }
     })
 
-    console.log("RESUME AI FULL RESPONSE:", response)
-
     const responseText =
         typeof response?.text === "function" ? response.text() : response?.text
-
-    console.log("RESUME AI RESPONSE TEXT:", responseText)
 
     if (!response || !responseText) {
         throw new Error("AI did not return resume content.")
@@ -178,30 +163,20 @@ Instructions:
     try {
         parsedData = JSON.parse(responseText)
     } catch (error) {
-        console.log("RESUME AI JSON PARSE ERROR:", error)
-        console.log("RESUME RAW AI RESPONSE TEXT:", responseText)
         throw new Error("Invalid JSON returned by AI.")
     }
 
     if (!parsedData?.html) {
-        console.log("RESUME PARSED DATA:", parsedData)
         throw new Error("Resume HTML not generated.")
     }
 
     const fullHtml = wrapHtml(parsedData.html)
 
-    console.log("FULL HTML GENERATED")
-    console.log("FULL HTML LENGTH:", fullHtml.length)
-
     let browser
 
     try {
-        console.log("PUPPETEER LAUNCH START")
-        console.log("PUPPETEER EXECUTABLE PATH:", puppeteer.executablePath())
-
         browser = await puppeteer.launch({
             headless: true,
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
@@ -211,13 +186,8 @@ Instructions:
             ]
         })
 
-        console.log("PUPPETEER LAUNCHED")
-
         const page = await browser.newPage()
-        console.log("NEW PAGE CREATED")
-
         await page.setContent(fullHtml, { waitUntil: "load" })
-        console.log("HTML SET ON PAGE")
 
         const pdfBuffer = await page.pdf({
             format: "A4",
@@ -230,8 +200,6 @@ Instructions:
             }
         })
 
-        console.log("PDF BUFFER GENERATED:", pdfBuffer ? pdfBuffer.length : 0)
-
         return Buffer.from(pdfBuffer)
     } catch (error) {
         console.log("PUPPETEER PDF ERROR:", error)
@@ -239,7 +207,6 @@ Instructions:
     } finally {
         if (browser) {
             await browser.close()
-            console.log("PUPPETEER CLOSED")
         }
     }
 }
