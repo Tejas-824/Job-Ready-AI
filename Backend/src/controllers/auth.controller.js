@@ -3,6 +3,15 @@ const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const tokenBlacklistModel = require("../models/blacklist.model")
 
+const isProduction = process.env.NODE_ENV === "production"
+
+const cookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 24 * 60 * 60 * 1000
+}
+
 async function registerUserController(req, res) {
     try {
         const { username, email, password } = req.body
@@ -14,23 +23,23 @@ async function registerUserController(req, res) {
             })
         }
 
-        const isUserAlreadyExists = await userModel.findOne({
+        const existingUser = await userModel.findOne({
             $or: [{ username }, { email }]
         })
 
-        if (isUserAlreadyExists) {
+        if (existingUser) {
             return res.status(400).json({
                 success: false,
                 message: "Account already exists with this email address or username"
             })
         }
 
-        const hash = await bcrypt.hash(password, 10)
+        const hashedPassword = await bcrypt.hash(password, 10)
 
         const user = await userModel.create({
             username,
             email,
-            password: hash
+            password: hashedPassword
         })
 
         const token = jwt.sign(
@@ -39,12 +48,7 @@ async function registerUserController(req, res) {
             { expiresIn: "1d" }
         )
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: false,
-            sameSite: "lax",
-            maxAge: 24 * 60 * 60 * 1000
-        })
+        res.cookie("token", token, cookieOptions)
 
         return res.status(201).json({
             success: true,
@@ -99,12 +103,7 @@ async function loginUserController(req, res) {
             { expiresIn: "1d" }
         )
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: false,
-            sameSite: "lax",
-            maxAge: 24 * 60 * 60 * 1000
-        })
+        res.cookie("token", token, cookieOptions)
 
         return res.status(200).json({
             success: true,
@@ -134,8 +133,8 @@ async function logoutUserController(req, res) {
 
         res.clearCookie("token", {
             httpOnly: true,
-            secure: false,
-            sameSite: "lax"
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax"
         })
 
         return res.status(200).json({
@@ -153,7 +152,7 @@ async function logoutUserController(req, res) {
 
 async function getMeController(req, res) {
     try {
-        const user = await userModel.findById(req.user.id)
+        const user = await userModel.findById(req.user.id).select("-password")
 
         if (!user) {
             return res.status(404).json({
@@ -165,11 +164,7 @@ async function getMeController(req, res) {
         return res.status(200).json({
             success: true,
             message: "User details fetched successfully",
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email
-            }
+            user
         })
     } catch (error) {
         console.error("GetMe error:", error)
