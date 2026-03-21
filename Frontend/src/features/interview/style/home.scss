@@ -10,6 +10,14 @@
   margin: 0 auto 28px;
   text-align: center;
 
+  &__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
   &__tag {
     display: inline-block;
     padding: 8px 14px;
@@ -18,7 +26,6 @@
     color: #4f46e5;
     font-size: 0.85rem;
     font-weight: 600;
-    margin-bottom: 14px;
   }
 
   h1 {
@@ -38,6 +45,27 @@
     color: #6b7280;
     font-size: 1rem;
     line-height: 1.7;
+  }
+}
+
+.logout-btn {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #111827;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+  white-space: nowrap;
+
+  &:hover {
+    background: #111827;
+    color: #ffffff;
+    border-color: #111827;
+    transform: translateY(-1px);
   }
 }
 
@@ -145,6 +173,25 @@
     gap: 12px;
     flex-wrap: wrap;
   }
+
+  &__input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #dcdfe4;
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+    margin-bottom: 12px;
+    background: #fff;
+
+    &:focus {
+      border-color: #6c63ff;
+    }
+  }
+}
+
+.personal-details-section {
+  margin-bottom: 20px;
 }
 
 .panel-divider {
@@ -282,6 +329,7 @@
   font-weight: 700;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   cursor: pointer;
   transition: 0.2s ease;
@@ -405,40 +453,6 @@
     margin: 0;
     font-size: 1.4rem;
   }
-
-  .page-header__top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-}
-
-.logout-btn {
-    background: #ff4d4f;
-    color: white;
-    border: none;
-    padding: 0.7rem 1.2rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.3s ease;
-    white-space: nowrap;
-}
-
-.logout-btn:hover {
-    background: #e63946;
-}
-
-@media (max-width: 768px) {
-    .page-header__top {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .logout-btn {
-        width: 100%;
-        text-align: center;
-    }
 }
 
 @media (max-width: 900px) {
@@ -457,11 +471,23 @@
 
   .generate-btn {
     width: 100%;
-    justify-content: center;
   }
 
   .panel {
     padding: 22px 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    &__top {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  .logout-btn {
+    width: 100%;
   }
 }
 
@@ -505,23 +531,4 @@
     justify-content: flex-start;
     gap: 14px;
   }
-  .panel__input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #dcdfe4;
-  border-radius: 10px;
-  outline: none;
-  font-size: 14px;
-  margin-bottom: 12px;
-  background: #fff;
-}
-
-.panel__input:focus {
-  border-color: #6c63ff;
-}
-
-.personal-details-section {
-  margin-bottom: 20px;
-}
-}
 }
