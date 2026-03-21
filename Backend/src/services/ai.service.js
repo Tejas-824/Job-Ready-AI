@@ -197,8 +197,11 @@ Instructions:
 
     try {
         console.log("PUPPETEER LAUNCH START")
+        console.log("PUPPETEER EXECUTABLE PATH:", puppeteer.executablePath())
+
         browser = await puppeteer.launch({
             headless: true,
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
@@ -207,6 +210,7 @@ Instructions:
                 "--no-zygote"
             ]
         })
+
         console.log("PUPPETEER LAUNCHED")
 
         const page = await browser.newPage()
