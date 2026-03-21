@@ -13,23 +13,11 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault()
 
-        try {
-            const success = await handleLogin({ email, password })
+        const success = await handleLogin({ email, password })
 
-            if (success) {
-                navigate('/')
-            }
-        } catch (error) {
-            console.error("Login failed:", error)
+        if (success) {
+            navigate('/')
         }
-    }
-
-    if (loading) {
-        return (
-            <main>
-                <h1>Loading...</h1>
-            </main>
-        )
     }
 
     return (
@@ -61,8 +49,12 @@ const Login = () => {
                         />
                     </div>
 
-                    <button className="button primary-button" type="submit">
-                        Login
+                    <button
+                        className="button primary-button"
+                        type="submit"
+                        disabled={loading}
+                    >
+                        {loading ? "Logging in..." : "Login"}
                     </button>
                 </form>
 

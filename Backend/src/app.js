@@ -6,10 +6,19 @@ const app = express()
 
 app.use(express.json())
 app.use(cookieParser())
+
 app.use(cors({
-    origin: process.env.CLIENT_URL,
+    origin: [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        process.env.CLIENT_URL
+    ],
     credentials: true
 }))
+
+app.get("/", (req, res) => {
+    res.status(200).send("Backend is running successfully")
+})
 
 /* require all the routes here */
 const authRouter = require("./routes/auth.routes")
