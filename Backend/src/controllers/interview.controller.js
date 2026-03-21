@@ -1,6 +1,11 @@
-const pdfParse = require("pdf-parse")
+const pdfParseModule = require("pdf-parse")
 const { generateInterviewReport } = require("../services/ai.service")
 const interviewReportModel = require("../models/interviewReport.model")
+
+const pdfParse =
+    typeof pdfParseModule === "function"
+        ? pdfParseModule
+        : pdfParseModule.default
 
 async function generateInterViewReportController(req, res) {
     try {
@@ -14,8 +19,12 @@ async function generateInterViewReportController(req, res) {
         }
 
         if (req.file) {
+            if (typeof pdfParse !== "function") {
+                throw new Error("PDF parser is not configured correctly.")
+            }
+
             const parsedPdf = await pdfParse(req.file.buffer)
-            resumeText = parsedPdf.text || ""
+            resumeText = parsedPdf?.text?.trim() || ""
         }
 
         const interViewReportByAi = await generateInterviewReport({
