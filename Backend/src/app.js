@@ -19,12 +19,12 @@ app.get("/", (req, res) => {
     res.status(200).send("Backend is running successfully")
 })
 
-/* require all the routes here */
 const authRouter = require("./routes/auth.routes")
 const interviewRouter = require("./routes/interview.routes")
+const agentRouter = require("./routes/agent.routes")
 
-/* using all the routes here */
 app.use("/api/auth", authRouter)
 app.use("/api/interview", interviewRouter)
+app.use("/api/agent", agentRouter)
 
 module.exports = app

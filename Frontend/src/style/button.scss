@@ -11,17 +11,15 @@
     transition: all 0.25s ease-in-out;
 
     &.primary-button {
-background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
         color: #ffffff;
-        box-shadow: 0 8px 20px rgba(225, 3, 77, 0.28);
+        box-shadow: 0 8px 20px rgba(109, 40, 217, 0.28);
     }
 
     &.primary-button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 24px rgba(225, 3, 77, 0.35);
+        box-shadow: 0 12px 24px rgba(109, 40, 217, 0.35);
     }
 
-    &:active {
-        transform: scale(0.96);
-    }
+    &:active { transform: scale(0.96); }
 }

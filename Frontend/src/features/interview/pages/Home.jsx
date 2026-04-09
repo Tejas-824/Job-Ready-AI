@@ -9,7 +9,6 @@ const Home = () => {
     const [selfDescription, setSelfDescription] = useState("")
     const [resumeFile, setResumeFile] = useState(null)
     const fileInputRef = useRef(null)
-
     const navigate = useNavigate()
 
     const handleLogout = () => {
@@ -20,82 +19,40 @@ const Home = () => {
 
     const handleFileChange = (e) => {
         const file = e.target.files?.[0]
-
         if (!file) return
-
-        if (file.type !== "application/pdf") {
-            alert("Only PDF files are allowed")
-            e.target.value = ""
-            return
-        }
-
+        if (file.type !== "application/pdf") { alert("Only PDF files are allowed"); e.target.value = ""; return }
         setResumeFile(file)
     }
 
     const handleDrop = (e) => {
         e.preventDefault()
-
         const file = e.dataTransfer.files?.[0]
-
         if (!file) return
-
-        if (file.type !== "application/pdf") {
-            alert("Only PDF files are allowed")
-            return
-        }
-
+        if (file.type !== "application/pdf") { alert("Only PDF files are allowed"); return }
         setResumeFile(file)
     }
 
-    const handleDragOver = (e) => {
-        e.preventDefault()
-    }
+    const handleDragOver = (e) => e.preventDefault()
 
     const handleGenerateReport = async () => {
-        if (!jobDescription.trim()) {
-            alert("Job description is required")
-            return
-        }
+        if (!jobDescription.trim()) { alert("Job description is required"); return }
+        if (!resumeFile && !selfDescription.trim()) { alert("Please upload your resume or write a self-description"); return }
 
-        if (!resumeFile && !selfDescription.trim()) {
-            alert("Please upload your resume or write a self-description")
-            return
-        }
-
-        const data = await generateReport({
-            jobDescription,
-            selfDescription,
-            resumeFile
-        })
-
-        if (data?._id) {
-            navigate(`/interview/${data._id}`)
-        }
+        const data = await generateReport({ jobDescription, selfDescription, resumeFile })
+        if (data?._id) navigate(`/interview/${data._id}`)
     }
 
-    if (loading) {
-        return (
-            <main className='loading-screen'>
-                <h1>Loading Please wait...</h1>
-            </main>
-        )
-    }
+    if (loading) return <main className='loading-screen'><h1>Loading Please wait...</h1></main>
 
     return (
         <div className='home-page'>
             <header className='page-header'>
                 <div className='page-header__top'>
                     <span className='page-header__tag'>AI Powered Interview Prep</span>
-
-                    <button onClick={handleLogout} className='logout-btn'>
-                        Logout
-                    </button>
+                    <button onClick={handleLogout} className='logout-btn'>Logout</button>
                 </div>
-
                 <h1>Create Your Custom <span className='highlight'>Interview Plan</span></h1>
-                <p>
-                    Let our AI analyze the job requirements and your profile to build a strong and personalized interview strategy.
-                </p>
+                <p>Let our AI analyze the job requirements and your profile to build a personalized interview strategy.</p>
             </header>
 
             <div className='interview-card'>
@@ -116,15 +73,7 @@ const Home = () => {
                             </div>
                             <span className='badge badge--required'>Required</span>
                         </div>
-
-                        <textarea
-                            value={jobDescription}
-                            onChange={(e) => setJobDescription(e.target.value)}
-                            className='panel__textarea'
-                            placeholder={`Paste the full job description here...\ne.g. 'Senior Frontend Engineer at Google requires proficiency in React, TypeScript, and large-scale system design...'`}
-                            maxLength={5000}
-                        />
-
+                        <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} className='panel__textarea' placeholder={`Paste the full job description here...`} maxLength={5000} />
                         <div className='panel__bottom'>
                             <span className='helper-text'>Detailed job descriptions give more accurate results.</span>
                             <div className='char-counter'>{jobDescription.length} / 5000 chars</div>
@@ -150,39 +99,17 @@ const Home = () => {
                         </div>
 
                         <div className='upload-section'>
-                            <label className='section-label'>
-                                Upload Resume
-                                <span className='badge badge--best'>Best Results</span>
-                            </label>
-
-                            <div
-                                className='dropzone'
-                                onClick={() => fileInputRef.current?.click()}
-                                onDrop={handleDrop}
-                                onDragOver={handleDragOver}
-                            >
+                            <label className='section-label'>Upload Resume <span className='badge badge--best'>Best Results</span></label>
+                            <div className='dropzone' onClick={() => fileInputRef.current?.click()} onDrop={handleDrop} onDragOver={handleDragOver}>
                                 <span className='dropzone__icon'>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <polyline points="16 16 12 12 8 16" />
-                                        <line x1="12" y1="12" x2="12" y2="21" />
+                                        <polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" />
                                         <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
                                     </svg>
                                 </span>
-
-                                <p className='dropzone__title'>
-                                    {resumeFile?.name || 'Click to upload or drag & drop'}
-                                </p>
+                                <p className='dropzone__title'>{resumeFile?.name || 'Click to upload or drag & drop'}</p>
                                 <p className='dropzone__subtitle'>PDF only (Max 3MB)</p>
-
-                                <input
-                                    ref={fileInputRef}
-                                    hidden
-                                    type='file'
-                                    id='resume'
-                                    name='resume'
-                                    accept='.pdf,application/pdf'
-                                    onChange={handleFileChange}
-                                />
+                                <input ref={fileInputRef} hidden type='file' accept='.pdf,application/pdf' onChange={handleFileChange} />
                             </div>
                         </div>
 
@@ -190,14 +117,7 @@ const Home = () => {
 
                         <div className='self-description'>
                             <label className='section-label' htmlFor='selfDescription'>Quick Self-Description</label>
-                            <textarea
-                                value={selfDescription}
-                                onChange={(e) => setSelfDescription(e.target.value)}
-                                id='selfDescription'
-                                name='selfDescription'
-                                className='panel__textarea panel__textarea--short'
-                                placeholder="Briefly describe your experience, key skills, and years of experience if you don't have a resume handy..."
-                            />
+                            <textarea value={selfDescription} onChange={(e) => setSelfDescription(e.target.value)} id='selfDescription' className='panel__textarea panel__textarea--short' placeholder="Briefly describe your experience, key skills, and years of experience..." />
                         </div>
 
                         <div className='info-box'>
@@ -208,9 +128,7 @@ const Home = () => {
                                     <line x1="12" y1="16" x2="12.01" y2="16" stroke="#1a1f27" strokeWidth="2" />
                                 </svg>
                             </span>
-                            <p>
-                                Either a <strong>Resume</strong> or a <strong>Self Description</strong> is required to generate a personalized plan.
-                            </p>
+                            <p>Either a <strong>Resume</strong> or a <strong>Self Description</strong> is required.</p>
                         </div>
                     </div>
                 </div>
@@ -232,24 +150,14 @@ const Home = () => {
                         <h2>My Recent Interview Plans</h2>
                         <p>Open and continue your previously generated reports.</p>
                     </div>
-
                     <ul className='reports-list'>
                         {reports.map(report => (
-                            <li
-                                key={report._id}
-                                className='report-item'
-                                onClick={() => navigate(`/interview/${report._id}`)}
-                            >
+                            <li key={report._id} className='report-item' onClick={() => navigate(`/interview/${report._id}`)}>
                                 <div className='report-item__top'>
                                     <h3>{report.title || 'Untitled Position'}</h3>
-                                    <p className={`match-score ${report.matchScore >= 80 ? 'score--high' : report.matchScore >= 60 ? 'score--mid' : 'score--low'}`}>
-                                        {report.matchScore}%
-                                    </p>
+                                    <p className={`match-score ${report.matchScore >= 80 ? 'score--high' : report.matchScore >= 60 ? 'score--mid' : 'score--low'}`}>{report.matchScore}%</p>
                                 </div>
-
-                                <p className='report-meta'>
-                                    Generated on {new Date(report.createdAt).toLocaleDateString()}
-                                </p>
+                                <p className='report-meta'>Generated on {new Date(report.createdAt).toLocaleDateString()}</p>
                             </li>
                         ))}
                     </ul>
