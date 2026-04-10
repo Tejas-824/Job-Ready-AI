@@ -40,7 +40,6 @@ const interviewReportSchema = z.object({
     title: z.string()
 })
 
-// ✅ FUNCTION
 const generateInterviewReport = async ({ resume, selfDescription, jobDescription }) => {
     const prompt = `
 Generate a detailed interview preparation report.
@@ -51,7 +50,7 @@ Job Description: ${jobDescription}
 `
 
     const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.0-flash-lite",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -69,7 +68,6 @@ Job Description: ${jobDescription}
     return JSON.parse(text)
 }
 
-// ✅ CRITICAL LINE (THIS FIXES YOUR ERROR)
 module.exports = {
     generateInterviewReport
 }
