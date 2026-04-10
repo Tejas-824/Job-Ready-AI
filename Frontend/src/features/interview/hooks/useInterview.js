@@ -5,7 +5,15 @@ import { useParams } from "react-router"
 
 export const useInterview = () => {
     const context = useContext(InterviewContext)
-    const { interviewId } = useParams()
+
+    // useParams is safe to call here but interviewId may be undefined on Home page
+    let params = {}
+    try {
+        params = useParams()
+    } catch {
+        params = {}
+    }
+    const interviewId = params?.interviewId
 
     if (!context) throw new Error("useInterview must be used within an InterviewProvider")
 
